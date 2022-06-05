@@ -55,7 +55,10 @@ impl Chip8 {
                 todo!("Clear display");
             }
             // RET
-            (0, 0, 0xE, 0xE) => {}
+            (0, 0, 0xE, 0xE) => {
+                self.sp -= 1;
+                self.pc = self.stack[self.sp as usize];
+            }
             // JP addr
             (1, _, _, _) => {}
             // CALL addr
@@ -93,5 +96,21 @@ impl Chip8 {
             (0xF, _, 6, 5) => {}
             _ => {}
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::STACK_SIZE;
+    use super::Chip8;
+
+    #[test]
+    fn opcode_ret() {
+        let mut stack = [0; STACK_SIZE];
+        stack[0] = 0x0333;
+        let mut chip = Chip8 { stack, sp: 1, ..Default::default() };
+        chip.process_opcode(0x00EE);
+        assert_eq!(chip.sp, 0);
+        assert_eq!(chip.pc, 0x333);
     }
 }
