@@ -36,7 +36,12 @@ impl Default for Chip8 {
 }
 
 impl Chip8 {
-    fn process_opcode(&mut self, opcode: u16) {
+    pub fn new() -> Self {
+        // TODO: need to load program or some shit
+        Chip8 { ..Default::default() }
+    }
+
+    pub fn process_opcode(&mut self, opcode: u16) {
         let nnn = opcode & 0x0FFF;
         let nibbles = (
             (opcode & 0xF000) >> 12 as u8,
@@ -60,9 +65,15 @@ impl Chip8 {
                 self.pc = self.stack[self.sp as usize];
             }
             // JP addr
-            (1, _, _, _) => {}
+            (1, _, _, _) => {
+                self.pc = nnn
+            }
             // CALL addr
-            (2, _, _, _) => {}
+            (2, _, _, _) => {
+                self.stack[self.sp as usize] = self.pc;
+                self.sp += 1;
+                self.pc = nnn
+            }
             // SE Vx, byte
             (3, _, _, _) => {}
             (4, _, _, _) => {}
@@ -112,5 +123,21 @@ mod tests {
         chip.process_opcode(0x00EE);
         assert_eq!(chip.sp, 0);
         assert_eq!(chip.pc, 0x333);
+    }
+
+    #[test]
+    fn opcode_jp() {
+        let mut chip = Chip8::new();
+        chip.process_opcode(0x1727);
+        assert_eq!(chip.pc, 0x727);
+    }
+
+    #[test]
+    fn opcode_call() {
+        let mut chip = Chip8::new();
+        chip.process_opcode(0x2727);
+        assert_eq!(chip.sp, 1);
+        assert_eq!(chip.stack[0], 0x200);
+        assert_eq!(chip.pc, 0x727);
     }
 }
