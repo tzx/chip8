@@ -10,6 +10,7 @@ const PC_START: u16 = 0x200;
 struct Chip8 {
     memory: [u8; MEM_SIZE],
     v_regs: [u8; NUM_V_REGS], // general purpose registers
+    i: u16,                   // I register (used to store memory addresses)
     dt: u8,                   // delay timer
     st: u8,                   // sound timer
     pc: u16,                  // program counter
@@ -24,6 +25,7 @@ impl Default for Chip8 {
         Chip8 {
             memory: [0; MEM_SIZE],
             v_regs: [0; NUM_V_REGS],
+            i: 0,
             dt: 0,
             st: 0,
             pc: PC_START,
@@ -49,10 +51,11 @@ impl Chip8 {
             (opcode & 0x00F0) >> 4 as u8,
             (opcode & 0x000F) as u8,
         );
-        let x = nibbles.1;
-        let y = nibbles.2;
+        // x and y are used to index and they are converted from u8 so it should be safe
+        let x = nibbles.1 as usize;
+        let y = nibbles.2 as usize;
         let n = nibbles.3;
-        let kk = opcode & 0x0FF;
+        let kk = (opcode & 0x0FF) as u8;
 
         match nibbles {
             // CLS
@@ -75,21 +78,59 @@ impl Chip8 {
                 self.pc = nnn
             }
             // SE Vx, byte
-            (3, _, _, _) => {}
-            (4, _, _, _) => {}
-            (5, _, _, 0) => {}
-            (6, _, _, _) => {}
-            (7, _, _, _) => {}
-            (8, _, _, 0) => {}
-            (8, _, _, 1) => {}
-            (8, _, _, 2) => {}
-            (8, _, _, 3) => {}
-            (8, _, _, 4) => {}
-            (8, _, _, 5) => {}
-            (8, _, _, 6) => {}
-            (8, _, _, 7) => {}
-            (8, _, _, 0xE) => {}
-            (9, _, _, 0) => {}
+            (3, _, _, _) => {
+                self.pc += if self.v_regs[x] == kk {2} else {0};
+            }
+            (4, _, _, _) => {
+                self.pc += if self.v_regs[x] != kk {2} else {0};
+            }
+            (5, _, _, 0) => {
+                self.pc += if self.v_regs[x] == self.v_regs[y as usize] {2} else {0};
+            }
+            (6, _, _, _) => {
+                self.v_regs[x] = kk;
+            }
+            (7, _, _, _) => {
+                self.v_regs[x] += kk;
+            }
+            (8, _, _, 0) => {
+                self.v_regs[x] = self.v_regs[y];
+            }
+            (8, _, _, 1) => {
+                self.v_regs[x] |= self.v_regs[y];
+            }
+            (8, _, _, 2) => {
+                self.v_regs[x] &= self.v_regs[y];
+            }
+            (8, _, _, 3) => {
+                self.v_regs[x] ^= self.v_regs[y];
+            }
+            (8, _, _, 4) => {
+                let (sum, overflow) = self.v_regs[x].overflowing_add(self.v_regs[y]);
+                self.v_regs[x] = sum;
+                self.v_regs[0xF] = overflow as u8;
+            }
+            (8, _, _, 5) => {
+                let (difference, overflow) = self.v_regs[x].overflowing_sub(self.v_regs[y]);
+                self.v_regs[x] = difference;
+                self.v_regs[0xF] = !overflow as u8;
+            }
+            (8, _, _, 6) => {
+                self.v_regs[0xF] = self.v_regs[x] & 0x1;
+                self.v_regs[x] = self.v_regs[x] >> 1;
+            }
+            (8, _, _, 7) => {
+                let (difference, overflow) = self.v_regs[y].overflowing_sub(self.v_regs[x]);
+                self.v_regs[x] = difference;
+                self.v_regs[0xF] = !overflow as u8;
+            }
+            (8, _, _, 0xE) => {
+                self.v_regs[0xF] = self.v_regs[x] >> 7;
+                self.v_regs[x] = self.v_regs[x] << 1;
+            }
+            (9, _, _, 0) => {
+                self.pc += if self.v_regs[x] != self.v_regs[y] {2} else {0};
+            }
             (0xA, _, _, _) => {}
             (0xB, _, _, _) => {}
             (0xC, _, _, _) => {}
