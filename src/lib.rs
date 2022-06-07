@@ -146,18 +146,51 @@ impl<R: RngCore> Chip8<R> {
             (0xC, _, _, _) => {
                 self.v_regs[x] = self.rng.gen::<u8>() & kk;
             }
-            (0xD, _, _, _) => {}
-            (0xE, _, 9, 0xE) => {}
-            (0xE, _, 0xA, 1) => {}
-            (0xF, _, 0, 7) => {}
-            (0xF, _, 0, 0xA) => {}
-            (0xF, _, 1, 5) => {}
-            (0xF, _, 1, 8) => {}
-            (0xF, _, 1, 0xE) => {}
-            (0xF, _, 2, 9) => {}
-            (0xF, _, 3, 3) => {}
-            (0xF, _, 5, 5) => {}
-            (0xF, _, 6, 5) => {}
+            (0xD, _, _, _) => {
+                todo!("lol fuck this shit");
+            }
+            (0xE, _, 9, 0xE) => {
+                self.pc += if (1 << self.v_regs[x]) & self.keyboard != 0 {2} else {0};
+            }
+            (0xE, _, 0xA, 1) => {
+                self.pc += if (1 << self.v_regs[x]) & self.keyboard == 0 {2} else {0};
+            }
+            (0xF, _, 0, 7) => {
+                self.v_regs[x] = self.dt;
+            }
+            (0xF, _, 0, 0xA) => {
+                for i in 0..0x10 {
+                    if 1 << i & self.keyboard != 0 {
+                        self.v_regs[x] = i as u8;
+                        break;
+                    }
+                }
+                // TODO: Do i pc -= 2?
+            }
+            (0xF, _, 1, 5) => {
+                self.dt = self.v_regs[x]; 
+            }
+            (0xF, _, 1, 8) => {
+                self.st = self.v_regs[x];
+            }
+            (0xF, _, 1, 0xE) => {
+                self.i += self.v_regs[x] as u16;
+            }
+            (0xF, _, 2, 9) => {
+                todo!("lol sprites");
+            }
+            (0xF, _, 3, 3) => {
+                let num = self.v_regs[x];
+                self.memory[self.i as usize] = num / 100;
+                self.memory[self.i as usize + 1] = (num / 10) % 10;
+                self.memory[self.i as usize + 2] = num % 10;
+            }
+            (0xF, _, 5, 5) => {
+                self.memory[(self.i as usize)..=(self.i as usize + x as usize)].copy_from_slice(&self.v_regs[0..=x]);
+            }
+            (0xF, _, 6, 5) => {
+                self.v_regs[0..=x].copy_from_slice(&self.memory[(self.i as usize)..=(self.i as usize + x as usize)]);
+            }
             _ => {}
         }
     }
