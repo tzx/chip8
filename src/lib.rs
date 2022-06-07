@@ -1,3 +1,5 @@
+use rand::{RngCore, prelude::ThreadRng, thread_rng, Rng};
+
 const MEM_SIZE: usize = 4096;
 const SCREEN_HEIGHT: usize = 32;
 const SCREEN_WIDTH: usize = 64;
@@ -7,7 +9,7 @@ const PC_START: u16 = 0x200;
 
 // can't derive default for const generics:
 // https://github.com/rust-lang/rust/pull/60466#discussion_r280989938
-struct Chip8 {
+struct Chip8 <R: RngCore> {
     memory: [u8; MEM_SIZE],
     v_regs: [u8; NUM_V_REGS], // general purpose registers
     i: u16,                   // I register (used to store memory addresses)
@@ -18,9 +20,10 @@ struct Chip8 {
     stack: [u16; STACK_SIZE],
     keyboard: u16,
     display: [[u8; SCREEN_WIDTH]; SCREEN_HEIGHT],
+    rng: R,
 }
 
-impl Default for Chip8 {
+impl Default for Chip8<ThreadRng> {
     fn default() -> Self {
         Chip8 {
             memory: [0; MEM_SIZE],
@@ -33,16 +36,19 @@ impl Default for Chip8 {
             stack: [0; STACK_SIZE],
             keyboard: 0,
             display: [[0; SCREEN_WIDTH]; SCREEN_HEIGHT],
+            rng: thread_rng(),
         }
     }
 }
 
-impl Chip8 {
+impl Chip8<ThreadRng> {
     pub fn new() -> Self {
         // TODO: need to load program or some shit
         Chip8 { ..Default::default() }
     }
+}
 
+impl<R: RngCore> Chip8<R> {
     pub fn process_opcode(&mut self, opcode: u16) {
         let nnn = opcode & 0x0FFF;
         let nibbles = (
@@ -131,9 +137,15 @@ impl Chip8 {
             (9, _, _, 0) => {
                 self.pc += if self.v_regs[x] != self.v_regs[y] {2} else {0};
             }
-            (0xA, _, _, _) => {}
-            (0xB, _, _, _) => {}
-            (0xC, _, _, _) => {}
+            (0xA, _, _, _) => {
+                self.i = nnn;
+            }
+            (0xB, _, _, _) => {
+                self.pc = nnn + self.v_regs[0] as u16;
+            }
+            (0xC, _, _, _) => {
+                self.v_regs[x] = self.rng.gen::<u8>() & kk;
+            }
             (0xD, _, _, _) => {}
             (0xE, _, 9, 0xE) => {}
             (0xE, _, 0xA, 1) => {}
