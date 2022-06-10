@@ -65,7 +65,6 @@ impl Default for Chip8<ThreadRng> {
 
 impl Chip8<ThreadRng> {
     pub fn new() -> Self {
-        // TODO: need to load program or some shit
         let mut chip8 = Chip8 {
             ..Default::default()
         };
@@ -76,7 +75,32 @@ impl Chip8<ThreadRng> {
 }
 
 impl<R: RngCore> Chip8<R> {
-    pub fn process_opcode(&mut self, opcode: u16) {
+    pub fn load_rom_data(&mut self, rom_data: &[u8]) {
+        let start = PC_START as usize;
+        let end = start + rom_data.len();
+        self.memory[start..end].copy_from_slice(rom_data);
+    }
+
+    pub fn get_display(&self) -> &[[u8; SCREEN_WIDTH]] {
+        &self.display
+    }
+
+
+    pub fn tick(&mut self) {
+        let opcode = self.fetch_opcode();
+        self.process_opcode(opcode);
+    }
+
+    fn fetch_opcode(&mut self) -> u16 {
+        let higher_byte = self.memory[self.pc as usize] as u16;
+        let lower_byte = self.memory[(self.pc  + 1) as usize] as u16;
+        let opcode = (higher_byte << 8) | lower_byte;
+        // Increase the program counter by 2 since each instruction is 2 bytes
+        self.pc += 2;
+        opcode
+    }
+
+    fn process_opcode(&mut self, opcode: u16) {
         let nnn = opcode & 0x0FFF;
         let nibbles = (
             (opcode & 0xF000) >> 12 as u8,
@@ -90,13 +114,10 @@ impl<R: RngCore> Chip8<R> {
         let n = nibbles.3;
         let kk = (opcode & 0x0FF) as u8;
 
-        // Increase the program counter by 2 since each instruction is 2 bytes
-        self.pc += 2;
-
         match nibbles {
             // CLS
             (0, 0, 0xE, 0) => {
-                todo!("Clear display");
+                self.display = [[0; SCREEN_WIDTH]; SCREEN_HEIGHT]
             }
             // RET
             (0, 0, 0xE, 0xE) => {
