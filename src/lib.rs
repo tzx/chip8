@@ -91,6 +91,27 @@ impl<R: RngCore> Chip8<R> {
         self.process_opcode(opcode);
     }
 
+    pub fn timer_tick(&mut self) {
+        if self.dt > 0 {
+            self.dt -= 1;
+        }
+
+        if self.st > 0 {
+            if self.st == 1 {
+                // I don't want to deal with sound, but it beeps here
+            }
+            self.st -= 1;
+        }
+    }
+
+    pub fn keypress(&mut self, idx: usize, pressed: bool) {
+        if pressed {
+            self.keyboard |= 1 << idx;
+        } else {
+            self.keyboard &= !(1 << idx);
+        }
+    }
+
     fn fetch_opcode(&mut self) -> u16 {
         let higher_byte = self.memory[self.pc as usize] as u16;
         let lower_byte = self.memory[(self.pc  + 1) as usize] as u16;
