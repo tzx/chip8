@@ -31,7 +31,7 @@ const HEXIDECIMAL_SPRITES: [u8; HEX_SPRITE_SIZE] = [
 
 // can't derive default for const generics:
 // https://github.com/rust-lang/rust/pull/60466#discussion_r280989938
-struct Chip8<R: RngCore> {
+pub struct Chip8<R: RngCore> {
     memory: [u8; MEM_SIZE],
     v_regs: [u8; NUM_V_REGS], // general purpose registers
     i: u16,                   // I register (used to store memory addresses)

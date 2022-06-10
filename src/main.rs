@@ -1,6 +1,6 @@
-use std::env;
+use std::{env, fs::File, io::Read};
 
-use chip8::{SCREEN_HEIGHT, SCREEN_WIDTH};
+use chip8::{SCREEN_HEIGHT, SCREEN_WIDTH, Chip8};
 use sdl2::event::Event;
 
 
@@ -15,6 +15,15 @@ fn main() {
     if args.len() != 2 {
         println!("not enough args. I ain't using clap");
     }
+
+
+    let mut chip8 = Chip8::new();
+    let mut rom = File::open(&args[1]).expect("unable to open file");
+    let mut buffer = Vec::new();
+    rom.read_to_end(&mut buffer).expect("unable to read file to buffer");
+    chip8.load_rom_data(&buffer);
+
+
 
     let sdl_context = sdl2::init().unwrap();
     let video_subsystem = sdl_context.video().unwrap();
