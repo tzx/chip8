@@ -1,8 +1,8 @@
 use rand::{prelude::ThreadRng, thread_rng, Rng, RngCore};
 
 const MEM_SIZE: usize = 4096;
-const SCREEN_HEIGHT: usize = 32;
-const SCREEN_WIDTH: usize = 64;
+pub const SCREEN_HEIGHT: usize = 32;
+pub const SCREEN_WIDTH: usize = 64;
 const NUM_V_REGS: usize = 16;
 const STACK_SIZE: usize = 16;
 const PC_START: u16 = 0x200;
