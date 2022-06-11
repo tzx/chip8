@@ -1,9 +1,8 @@
 use std::{env, fs::File, io::Read};
 
-use chip8::{SCREEN_HEIGHT, SCREEN_WIDTH, Chip8};
+use chip8::{Chip8, SCREEN_HEIGHT, SCREEN_WIDTH};
 use rand::RngCore;
-use sdl2::{event::Event, render::Canvas, pixels::Color, rect::Rect, video::Window};
-
+use sdl2::{event::Event, pixels::Color, rect::Rect, render::Canvas, video::Window};
 
 const SCALE: u32 = 20;
 const WINDOW_HEIGHT: u32 = (SCREEN_HEIGHT as u32) * SCALE;
@@ -18,7 +17,12 @@ fn draw_screen<R: RngCore>(chip8: &Chip8<R>, canvas: &mut Canvas<Window>) {
     for (r, row) in display.iter().enumerate() {
         for (c, col) in row.iter().enumerate() {
             if *col == 1 {
-                let rect = Rect::new((c as u32 * SCALE) as i32, (r as u32 * SCALE) as i32, SCALE, SCALE);
+                let rect = Rect::new(
+                    (c as u32 * SCALE) as i32,
+                    (r as u32 * SCALE) as i32,
+                    SCALE,
+                    SCALE,
+                );
                 canvas.fill_rect(rect).unwrap();
             }
         }
@@ -34,13 +38,12 @@ fn main() {
         println!("not enough args. I ain't using clap");
     }
 
-
     let mut chip8 = Chip8::new();
     let mut rom = File::open(&args[1]).expect("unable to open file");
     let mut buffer = Vec::new();
-    rom.read_to_end(&mut buffer).expect("unable to read file to buffer");
+    rom.read_to_end(&mut buffer)
+        .expect("unable to read file to buffer");
     chip8.load_rom_data(&buffer);
-
 
     let sdl_context = sdl2::init().unwrap();
     let video_subsystem = sdl_context.video().unwrap();
@@ -58,9 +61,9 @@ fn main() {
     let mut event_pump = sdl_context.event_pump().unwrap();
 
     'running: loop {
-        for evt in event_pump.poll_iter(){
+        for evt in event_pump.poll_iter() {
             match evt {
-                Event::Quit{..} => {
+                Event::Quit { .. } => {
                     break 'running;
                 }
                 _ => {}
@@ -73,5 +76,4 @@ fn main() {
             draw_screen(&chip8, &mut canvas);
         }
     }
-
 }

@@ -7,7 +7,6 @@ const NUM_V_REGS: usize = 16;
 const STACK_SIZE: usize = 16;
 const PC_START: u16 = 0x200;
 
-
 // Sprites are 5 bytes each, so we have 16x5=80 bytes
 const HEX_SPRITE_SIZE: usize = 80;
 const HEXIDECIMAL_SPRITES: [u8; HEX_SPRITE_SIZE] = [
@@ -26,7 +25,7 @@ const HEXIDECIMAL_SPRITES: [u8; HEX_SPRITE_SIZE] = [
     0xF0, 0x80, 0x80, 0x80, 0xF0, // C
     0xE0, 0x90, 0x90, 0x90, 0xE0, // D
     0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
-    0xF0, 0x80, 0xF0, 0x80, 0x80 // F
+    0xF0, 0x80, 0xF0, 0x80, 0x80, // F
 ];
 
 // can't derive default for const generics:
@@ -85,7 +84,6 @@ impl<R: RngCore> Chip8<R> {
         &self.display
     }
 
-
     pub fn tick(&mut self) {
         let opcode = self.fetch_opcode();
         self.process_opcode(opcode);
@@ -114,7 +112,7 @@ impl<R: RngCore> Chip8<R> {
 
     fn fetch_opcode(&mut self) -> u16 {
         let higher_byte = self.memory[self.pc as usize] as u16;
-        let lower_byte = self.memory[(self.pc  + 1) as usize] as u16;
+        let lower_byte = self.memory[(self.pc + 1) as usize] as u16;
         let opcode = (higher_byte << 8) | lower_byte;
         // Increase the program counter by 2 since each instruction is 2 bytes
         self.pc += 2;
@@ -137,9 +135,7 @@ impl<R: RngCore> Chip8<R> {
 
         match nibbles {
             // CLS
-            (0, 0, 0xE, 0) => {
-                self.display = [[0; SCREEN_WIDTH]; SCREEN_HEIGHT]
-            }
+            (0, 0, 0xE, 0) => self.display = [[0; SCREEN_WIDTH]; SCREEN_HEIGHT],
             // RET
             (0, 0, 0xE, 0xE) => {
                 self.sp -= 1;
