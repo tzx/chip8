@@ -171,7 +171,7 @@ impl<R: RngCore> Chip8<R> {
                 self.v_regs[x] = kk;
             }
             (7, _, _, _) => {
-                self.v_regs[x] += kk;
+                self.v_regs[x] = self.v_regs[x].wrapping_add(kk);
             }
             (8, _, _, 0) => {
                 self.v_regs[x] = self.v_regs[y];
@@ -240,11 +240,11 @@ impl<R: RngCore> Chip8<R> {
                         if new_pixel == 1 {
                             let pos_x = (orig_x + c) % SCREEN_WIDTH;
                             let pos_y = (orig_y + r) % SCREEN_HEIGHT;
-                            let old_pixel = self.display[pos_x][pos_y];
+                            let old_pixel = self.display[pos_y][pos_x];
                             if old_pixel == 1 {
                                 collided = true
                             }
-                            self.display[pos_x][pos_y] = new_pixel ^ old_pixel;
+                            self.display[pos_y][pos_x] = new_pixel ^ old_pixel;
                         }
                     }
                 }
